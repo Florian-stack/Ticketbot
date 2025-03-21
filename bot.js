@@ -109,15 +109,10 @@ const {
     const logChannel = client.channels.cache.get(config.logChannelId);
     if (!logChannel) return console.error('Log-Kanal nicht gefunden!');
   
-    const actionColors = {
-      create: 0x00FF00,   // Grün
-      close: 0xFF0000,    // Rot
-      claim: 0xFFA500     // Orange
-    };
   
     const logEmbed = new EmbedBuilder()
-      .setTitle(`📝 Ticket ${action}`)
-      .setColor(actionColors[action] || 0x2F3136)
+    .setTitle(`📝 Ticket ${action}`)
+    .setColor(config.logs.colors[action] || 0x2F3136)
       .setDescription(details)
       .addFields(
         { name: 'Benutzer', value: user.toString(), inline: true },
@@ -130,39 +125,32 @@ const {
   
     
     async function createTicketPanel(interaction) {
-      if (!interaction.memberPermissions.has(PermissionFlagsBits.Administrator)) {
-        return interaction.reply({ 
-          content: '⛔ Keine Berechtigung!', 
-          ephemeral: true 
-        });
-      }
+    // Nachher (mit Config)
+    if (!interaction.memberPermissions.has(PermissionFlagsBits.Administrator)) {
+      return interaction.reply({ 
+        content: config.messages.noPermission, 
+        ephemeral: true 
+      });
+    }
+
     
       const embed = new EmbedBuilder()
-        .setTitle('🎫 Dortmund City Ticket System')
-        .setDescription([
-          '**Willkommen beim Dortmund City Support!**\n',
-          '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬',
-          '**Ticket-Typen:**',
-          '🛠️ **Support** - Technische Hilfe & Fragen',
-          '👥 **Teambewerbung** - Bewerbung für unser Team',
-          '🚔 **Fraktionsbewerbung** - Fraktionsangelegenheiten',
-          '👑 **High Team** - Kontakt zur Serverleitung',
-          '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬',
-          '▶️ Wähle unten deinen Ticket-Typ aus!'
-        ].join('\n'))
-        .setColor(0x2F3136)
-        .setThumbnail('https://i.imgur.com/A3yS5LJ.png')
-        .setFooter({ text: 'Dortmund City RP | Professioneller Support rund um die Uhr' });
-    
+      .setTitle(config.embeds.panel.title)
+      .setDescription(config.embeds.panel.description)
+      .setColor(config.embeds.panel.color)
+      .setThumbnail(config.embeds.panel.thumbnail)
+      .setFooter({ text: config.embeds.panel.footer });
+      
       const selectMenu = new StringSelectMenuBuilder()
         .setCustomId('ticket_type')
         .setPlaceholder('Ticket-Typ auswählen')
         .addOptions(
-          { label: 'Support', emoji: '🛠️', value: 'support' },
-          { label: 'Teambewerbung', emoji: '👥', value: 'team' },
-          { label: 'Fraktionsbewerbung', emoji: '🚔', value: 'fraction' },
-          { label: 'High Team', emoji: '👑', value: 'highteam' }
-        );
+          Object.entries(config.ticketTypes).map(([key, type]) => ({
+            label: type.name,
+            emoji: type.emoji,
+            value: key
+          }))
+        )
     
       await interaction.channel.send({ 
         embeds: [embed], 
@@ -222,8 +210,9 @@ const {
           }))
         ];
     
+        const typeConfig = config.ticketTypes[ticketType];
         const channel = await interaction.guild.channels.create({
-          name: `${ticketType}-${sanitizedName}`,
+          name: `${typeConfig.name.toLowerCase()}-${sanitizedName}`,
           parent: config.ticketCategories[ticketType],
           permissionOverwrites: permissionOverwrites,
           reason: `Ticket erstellt von ${interaction.user.tag}`
@@ -239,25 +228,27 @@ const {
         );
     
         const ticketEmbed = new EmbedBuilder()
-          .setTitle(`${emoji} ${name} Ticket`)
-          .setDescription([
-            `Hallo ${interaction.user},\n`,
-            'Bitte beschreibe dein Anliegen so genau wie möglich.',
-            '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬',
-            '**Zuständiges Team:**',
-            `> ${roleIds.map(r => `<@&${r}>`).join('\n> ')}`,
-            '**Ticket-Optionen:**',
-            '🔒 - Ticket schließen',
-            '🙋♂️ - Ticket übernehmen'
-          ].join('\n'))
-          .setColor(0x2F3136);
+        .setTitle(config.embeds.ticket.titles[ticketType])
+        .setDescription([
+          `Hallo ${interaction.user},\n`,
+          'Bitte beschreibe dein Anliegen so genau wie möglich.',
+          '▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬▬',
+          '**Zuständiges Team:**',
+          `> ${roleIds.map(r => `<@&${r}>`).join('\n> ')}`,
+          '**Ticket-Optionen:**',
+          '🔒 - Ticket schließen',
+          '🙋♂️ - Ticket übernehmen'
+        ].join('\n'))
+        .setColor(config.embeds.ticket.color)
+        .setFooter({ text: config.embeds.ticket.footer });
     
         const buttons = new ActionRowBuilder().addComponents(
           new ButtonBuilder()
-            .setCustomId('close_ticket')
-            .setLabel('Schließen')
-            .setStyle(ButtonStyle.Danger)
-            .setEmoji('🔒'),
+          .setCustomId('close_ticket')
+          .setLabel(config.buttons.close.label)
+          .setStyle(ButtonStyle[config.buttons.close.style])
+          .setEmoji(config.buttons.close.emoji),
+            
           new ButtonBuilder()
             .setCustomId('claim_ticket')
             .setLabel('Übernehmen')
@@ -272,10 +263,10 @@ const {
         });
     
         await interaction.reply({ 
-          content: `✅ Ticket erstellt: ${channel}`, 
+          content: `${config.messages.ticketCreated} ${channel}`, 
           ephemeral: true 
         });
-    
+        
       } catch (error) {
         console.error('Fehler beim Ticket erstellen:', error);
         await interaction.reply({ 
