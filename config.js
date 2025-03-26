@@ -100,7 +100,8 @@ module.exports = {
     colors: {
       create: 0x00FF00, // Grün
       close: 0xFF0000,  // Rot
-      claim: 0xFFA500   // Orange
+      claim: 0xFFA500,   // Orange
+      dm_sent: 0x0000FF
     }
   }
 };
