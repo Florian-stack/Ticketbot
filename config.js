@@ -36,7 +36,10 @@ module.exports = {
     ticketClaimed: '✅ {user} hat das Ticket übernommen!',
     allClosed: '✅ Erfolgreich {count} Tickets geschlossen!',
     closeError: '❌ Fehler beim Schließen der Tickets!',
-    invalidRoles: '❌ Ungültige Rollen-IDs: {roles}'
+    invalidRoles: '❌ Ungültige Rollen-IDs: {roles}',
+    dmNotification: 'Ein Teammitglied hat auf Ihr Ticket geantwortet. Bitte überprüfen Sie das Ticket für weitere Informationen.',
+    dmSent: 'DM wurde erfolgreich an den Ticket-Ersteller gesendet.',
+    dmError: 'Fehler beim Senden der DM. Möglicherweise hat der Benutzer Direktnachrichten deaktiviert.'
   },
 
   // Embed-Einstellungen
